@@ -2,13 +2,15 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
 
-// GET /api/usuarios  (lista)
-router.get('/', async (req, res) => {
+// GET /api/usuarios
+router.get('/', async (_req, res) => {
   try {
-    const { rows } = await pool.query('SELECT id_usuario, nombre, correo, fecha_reg FROM usuarios ORDER BY id_usuario');
+    const { rows } = await pool.query(
+      'SELECT id_usuario, nombre, correo, fecha_reg FROM usuarios ORDER BY id_usuario'
+    );
     res.json({ ok: true, data: rows });
-  } catch (err) {
-    console.error(err);
+  } catch (e) {
+    console.error(e);
     res.status(500).json({ ok: false, error: 'Error al listar usuarios' });
   }
 });
@@ -22,13 +24,13 @@ router.get('/:id', async (req, res) => {
     );
     if (!rows.length) return res.status(404).json({ ok: false, error: 'No encontrado' });
     res.json({ ok: true, data: rows[0] });
-  } catch (err) {
-    console.error(err);
+  } catch (e) {
+    console.error(e);
     res.status(500).json({ ok: false, error: 'Error al obtener usuario' });
   }
 });
 
-// POST /api/usuarios  (crear)
+// POST /api/usuarios
 router.post('/', async (req, res) => {
   try {
     const { nombre, correo, password } = req.body;
@@ -42,16 +44,14 @@ router.post('/', async (req, res) => {
       [nombre, correo, password]
     );
     res.status(201).json({ ok: true, data: rows[0] });
-  } catch (err) {
-    if (err.code === '23505') { // unique_violation
-      return res.status(409).json({ ok: false, error: 'Correo ya registrado' });
-    }
-    console.error(err);
+  } catch (e) {
+    if (e.code === '23505') return res.status(409).json({ ok: false, error: 'Correo ya registrado' });
+    console.error(e);
     res.status(500).json({ ok: false, error: 'Error al crear usuario' });
   }
 });
 
-// PUT /api/usuarios/:id  (actualizar)
+// PUT /api/usuarios/:id
 router.put('/:id', async (req, res) => {
   try {
     const { nombre, correo, password } = req.body;
@@ -66,11 +66,9 @@ router.put('/:id', async (req, res) => {
     );
     if (!rows.length) return res.status(404).json({ ok: false, error: 'No encontrado' });
     res.json({ ok: true, data: rows[0] });
-  } catch (err) {
-    if (err.code === '23505') {
-      return res.status(409).json({ ok: false, error: 'Correo ya registrado' });
-    }
-    console.error(err);
+  } catch (e) {
+    if (e.code === '23505') return res.status(409).json({ ok: false, error: 'Correo ya registrado' });
+    console.error(e);
     res.status(500).json({ ok: false, error: 'Error al actualizar' });
   }
 });
@@ -81,8 +79,8 @@ router.delete('/:id', async (req, res) => {
     const result = await pool.query('DELETE FROM usuarios WHERE id_usuario = $1', [req.params.id]);
     if (result.rowCount === 0) return res.status(404).json({ ok: false, error: 'No encontrado' });
     res.json({ ok: true, message: 'Eliminado' });
-  } catch (err) {
-    console.error(err);
+  } catch (e) {
+    console.error(e);
     res.status(500).json({ ok: false, error: 'Error al eliminar' });
   }
 });
